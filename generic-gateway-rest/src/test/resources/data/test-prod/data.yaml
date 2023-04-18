@@ -1,0 +1,18 @@
+# token request sets
+# set 01
+token_set_01:
+  client_id: "ichiba_android_long"
+  client_secret: "pkmKduh4TwiCZd0aR1daKUMxR2K75oExph2BuhtgRwY"
+  username: "point128"
+  password: "rakuten"
+  grant_type: "password"
+  scope: "90days@Access,browsing_history_add,browsing_history_delete,browsing_history_read,ichiba_shop_browsinghistory"
+
+# set 02
+token_set_02:
+  client_id: "ichiba_iphone_long"
+  client_secret: "VtJUqlGMmcHSAXwuho_t87YMTC3LMqPsIdWgxu9oB6g"
+  username: "ecsg111"
+  password: "rakuten"
+  grant_type: "password"
+  scope: "90days@Access,purchase_history_read"

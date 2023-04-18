@@ -1,0 +1,9 @@
+curl --location --request POST '${GG_URL}/singlerequest' \
+--header 'X-TraceId: fac62f8b-1c2f-461e-a21c-5891ab2801f5' \
+--header 'X-BffId: REST-MOBILE' \
+--header 'X-ClientId: ichiba_iphone_long' \
+--header 'Content-Type: application/json' \
+--data '{
+    "bodyParameters": {},
+    "interfaceKey": "createCartSessionKey"
+}'
