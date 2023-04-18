@@ -1,0 +1,5 @@
+rootProject.name = 'bittracer'
+include 'bff-core'
+include 'core'
+include 'generic-gateway-rest'
+

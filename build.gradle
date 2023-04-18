@@ -1,0 +1,214 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.5'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+	id 'java'
+}
+//
+//group = 'com.imtilab'
+//version = '0.0.1-SNAPSHOT'
+//sourceCompatibility = '1.8'
+//
+//configurations {
+//	compileOnly {
+//		extendsFrom annotationProcessor
+//	}
+//}
+//
+//repositories {
+//	mavenCentral()
+//}
+//
+//dependencies {
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+//	implementation 'org.springframework.boot:spring-boot-starter-web'
+//	compileOnly 'org.projectlombok:lombok'
+//	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+//	runtimeOnly 'com.mysql:mysql-connector-j'
+//	annotationProcessor 'org.projectlombok:lombok'
+//	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+//
+//
+//	implementation 'org.codehaus.groovy:groovy-all:3.0.5'
+//	implementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+//}
+//
+//tasks.named('test') {
+//	useJUnitPlatform()
+//}
+allprojects {
+
+	apply plugin: 'java'
+	apply plugin: 'groovy'
+	apply plugin: 'idea'
+	apply plugin: 'eclipse'
+
+	version = "1.0"
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+
+	compileGroovy {
+		options.encoding = 'UTF-8'
+	}
+
+	compileJava {
+		options.encoding = 'UTF-8'
+	}
+	repositories {
+		mavenCentral()
+		jcenter()
+	}
+
+	idea {
+		module {
+			downloadJavadoc = true
+			downloadSources = true
+		}
+	}
+}
+
+//bootJar and jar, if use gradle build instead of gradle clean
+bootJar {
+	enabled = false
+}
+jar {
+	enabled = true
+}
+test.dependsOn subprojects*.test
+
+task testReport(type: TestReport) {
+	println "Running gradle version: $gradle.gradleVersion"
+	println "Total number of processors or cores available to the JVM: " + Runtime.getRuntime().availableProcessors()
+	println "Total memory currently available to the JVM (MB): " + Runtime.getRuntime().totalMemory() / 1000000
+	println "Total amount of free memory available to the JVM (MB): " + Runtime.getRuntime().freeMemory()/1000000
+	destinationDir = file("$buildDir/reports/allTests")
+	reportOn subprojects*.test
+}
+
+subprojects {
+
+	processTestResources {
+		duplicatesStrategy = DuplicatesStrategy.INCLUDE
+	}
+
+	ext {
+		defineProfile = {
+			def customProperties = project.properties
+			def dirs = []
+			String selectedProfile = customProperties['profile'].toString().toLowerCase()
+			project.properties['folders'].split(',').each {
+				folder -> dirs.add(customProperties['rootPath'] << folder << "/" << selectedProfile)
+			}
+			project.properties['jsonFolders'].split(',').each {
+				folder ->
+					dirs.add(customProperties['rootPath'] << folder << "/" << selectedProfile)
+					dirs.add(customProperties['rootPath'] << folder)
+			}
+			dirs.add(customProperties['configurationPath'] << selectedProfile)
+			sourceSets.test.resources.srcDirs += [dirs]
+		}
+	}
+
+	defineProfile()
+
+	dependencies {
+		//implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+		//implementation 'org.springframework.boot:spring-boot-starter-web'
+		//compileOnly 'org.projectlombok:lombok'
+
+		//runtimeOnly 'com.mysql:mysql-connector-j'
+		//annotationProcessor 'org.projectlombok:lombok'
+		//testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+
+		implementation 'org.codehaus.groovy:groovy-all:3.0.9'
+		implementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+		implementation 'org.apache.commons:commons-compress:1.3'
+		implementation 'net.sf.json-lib:json-lib:2.4:jdk15'
+		implementation 'org.apache.httpcomponents:httpclient:4.5.6'
+		implementation 'org.apache.commons:commons-lang3:3.9'
+		implementation 'com.xlson.groovycsv:groovycsv:1.3'
+		implementation 'commons-io:commons-io:2.6'
+		//implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.9'
+		implementation 'org.yaml:snakeyaml:1.21'
+		implementation group: 'org.json', name: 'json', version: '20190722'
+
+		//  testImplementation 'com.athaydes:spock-reports:1.6.0', { transitive = false }
+		//  testImplementation "org.gebish:geb-spock:3.4"
+	}
+
+	test {
+		useJUnitPlatform()
+		def numberOfThreads = project.property("numberOfThreads")
+		if (numberOfThreads.equalsIgnoreCase("Auto")
+				|| numberOfThreads == "" || numberOfThreads == "null" || numberOfThreads == null) {
+			maxParallelForks = Runtime.getRuntime().availableProcessors()
+			maxHeapSize = "1024m"
+			println "Number of threads in use: " + maxParallelForks
+			println "Max heap size: " + maxHeapSize
+		} else {
+			int numberOfThreadsIntVal = Integer.parseInt(numberOfThreads)
+			maxParallelForks = numberOfThreadsIntVal
+			maxHeapSize = numberOfThreadsIntVal == 1 ? "4096m" : "1024m"
+			println "Number of threads in use: " + maxParallelForks
+			println "Max heap size: " + maxHeapSize
+		}
+		ext {
+			executeFilterTest = { String apiNames, boolean isInclude ->
+				def list = []
+				if(apiNames) {
+					apiNames.replaceAll("\\.", "/").split(",").each {
+						int lastIndexOfSlash = it.lastIndexOf("/")
+//                      if (Character.isUpperCase(it.charAt(lastIndexOfSlash + 1))) {
+//                          list.add("**/" + it + "**")
+						if (lastIndexOfSlash < 0) {
+							list.add("**/" + it + ".**")
+						} else if (it.endsWith("/groovy")) {
+							it = it.replace("/groovy", ".**")
+							list.add("**/" + it)
+						} else {
+							list.add("**/" + it + "/**")
+						}
+					}
+				}
+				if (isInclude)
+					include list
+				else
+					exclude list
+			}
+		}
+
+		if (System.getProperty("testSuite", null) != null) {
+			Properties testSuites = new Properties()
+			String filePath = "test-suite.properties"
+			File file = file(filePath)
+			if (file.isFile()) {
+				file.withInputStream { testSuites.load(it) }
+				executeFilterTest(testSuites.getProperty(System.getProperty("testSuite")), true)
+			}
+		} else if (project.hasProperty('APINameList') && !project.property('APINameList').isEmpty()) {
+			String apiNames = project.property('APINameList')
+			boolean isInclude = project.property('APIIncludeExcludeType').equals("include")
+			executeFilterTest(apiNames, isInclude)
+		}
+		ignoreFailures = true
+//        doLast {
+//            copy {
+//                from 'build/test-results'
+//                into '../build/xml-report'
+//                include '**/*.xml'
+//            }
+//        }
+		systemProperty 'profile', project.properties['profile']
+		systemProperty 'testCase', project.properties['testCase']
+		systemProperty 'testMethod', project.properties['testMethod']
+		systemProperty 'base.url', project.properties['base.url']
+		systemProperty 'web_bff_apikey', project.properties['web_bff_apikey']
+		systemProperty 'ichiba_top_client_apikey', project.properties['ichiba_top_client_apikey']
+		systemProperty 'r_bic_client_apikey', project.properties['r_bic_client_apikey']
+		systemProperty 'versionAbleModulePackageName', project.properties['versionAbleModulePackageName']
+		//   systemProperty 'com.athaydes.spockframework.report.showCodeBlocks', true
+		//   systemProperty 'com.athaydes.spockframework.report.outputDir', 'build/reports/spock'
+	}
+
+}
+
